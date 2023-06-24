@@ -308,13 +308,13 @@ def nodes_relationship(surface_name, output_dir):
 '''TEST MODE or NOT'''
 TEST = 0  # '1' is test mode, '0' is ordinary mode
 TEST = True if TEST == 1 else False
-count_h, count_w = 3, 6  # define which area to test: count_h < nh, count_w < w
+count_h, count_w = 0, 0  # define which area to test: count_h < nh, count_w < w
 
 # the number in two direction and expand_factor
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-nh: int = 4
-nw: int = 8
+nh: int = 6
+nw: int = 10
 expand_factor: float = 0.3  # 0%
 
 if __name__ == '__main__':
-    nodes_relationship('D23', './Surface_D23')
+    nodes_relationship('4-000', './Surface_4-000')

@@ -1,10 +1,10 @@
 import N1_CropToLeftGrid
-import N2_CornerHarrisPoints
-import N4_NodesRelationship
-import N5_ResultVisualization
-import N6_UseCoordTopoDrawGrid
+import N2_ExtractCoordinate
+import N3_NodesRelationship
+import N4_RemoveAddRelation
+import N5_UseCoordTopoDrawGrid
 
-surface_name = '4-D05'
+surface_name = '4-000'
 
 output_dir = 'Surface' + '_' + surface_name
 
@@ -12,15 +12,16 @@ output_dir = 'Surface' + '_' + surface_name
 N1_CropToLeftGrid.crop(surface_name, output_dir)
 
 # extract the nodes of the grid, namely extract pixel coordinates
-N2_CornerHarrisPoints.corner_harris_points(surface_name, output_dir, test_or_not=False)
+N2_ExtractCoordinate.extract_coordinates(surface_name, output_dir)
 
 # extract the nodes relationship
-N4_NodesRelationship.nodes_relationship(surface_name, output_dir)
+N3_NodesRelationship.nodes_relationship(surface_name, output_dir)
 
-# here is to visualize the result of extracted nodes relationship
-# this part is not necessary to get the final result(it can be skipped)
-N5_ResultVisualization.result_visualize(surface_name, output_dir)
+# fix the uncorrect nodes(coordinates) relationship
+N4_RemoveAddRelation.Rmv_add_relatn(surface_name, final_img_name="N4_GridWithKeys")
 
 # use coordinates and topology relationship to get the grid(planar grid)
-N6_UseCoordTopoDrawGrid.coord_topo_2_grid(output_dir)
+N5_UseCoordTopoDrawGrid.CoordTopo2grid(output_dir, show_text=False).run()
 
+# Prompt:
+print("If there still exists any wrong relationship, just run 'N4_RemoveAddRelation.py' seperately.")

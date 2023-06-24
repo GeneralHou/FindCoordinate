@@ -15,16 +15,16 @@ def crop_only_left_frame(img, frame_bounding):
 
 
 def crop(surface_name, output_dir):
-    img = cv2.imread(f'./{output_dir}/{surface_name}.png')
+    img = cv2.imread(f'./{output_dir}/{surface_name}.jpg')
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    t, binary = cv2.threshold(gray, 130, 255, cv2.THRESH_BINARY)
+    t, binary = cv2.threshold(gray, 220, 255, cv2.THRESH_BINARY)
 
     contours, hierarchy = cv2.findContours(binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     frame_bounding = cv2.boundingRect(contours[2])
 
-    croped_img = crop_only_left_frame(gray, frame_bounding)
+    croped_img = crop_only_left_frame(img, frame_bounding)
     cv2.imwrite(f'./{output_dir}/{surface_name}_crop.png', croped_img)
 
 
 if __name__ == '__main__':
-    crop('4-D05', 'Surface_4-D05')
+    crop('4-000', 'Surface_4-000')
