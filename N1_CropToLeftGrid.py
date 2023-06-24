@@ -14,7 +14,8 @@ def crop_only_left_frame(img, frame_bounding):
     return croped_img
 
 
-def crop(surface_name, output_dir):
+def crop(surface_name):
+    output_dir = 'Surface_' + surface_name
     img = cv2.imread(f'./{output_dir}/{surface_name}.jpg')
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     t, binary = cv2.threshold(gray, 220, 255, cv2.THRESH_BINARY)
@@ -27,4 +28,4 @@ def crop(surface_name, output_dir):
 
 
 if __name__ == '__main__':
-    crop('4-000', 'Surface_4-000')
+    crop('4-000')

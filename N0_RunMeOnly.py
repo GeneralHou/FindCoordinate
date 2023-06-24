@@ -4,18 +4,18 @@ import N3_NodesRelationship
 import N4_RemoveAddRelation
 import N5_UseCoordTopoDrawGrid
 
-surface_name = '4-000'
+surface_name = 'S19_0'
 
 output_dir = 'Surface' + '_' + surface_name
 
 # the rectangle boundary is useless, therefore we need to crop the image and only left the grid
-N1_CropToLeftGrid.crop(surface_name, output_dir)
+N1_CropToLeftGrid.crop(surface_name)
 
 # extract the nodes of the grid, namely extract pixel coordinates
-N2_ExtractCoordinate.extract_coordinates(surface_name, output_dir)
+N2_ExtractCoordinate.extract_coordinates(surface_name)
 
 # extract the nodes relationship
-N3_NodesRelationship.nodes_relationship(surface_name, output_dir)
+N3_NodesRelationship.nodes_relationship(surface_name)
 
 # fix the uncorrect nodes(coordinates) relationship
 N4_RemoveAddRelation.Rmv_add_relatn(surface_name, final_img_name="N4_GridWithKeys")

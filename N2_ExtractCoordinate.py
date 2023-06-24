@@ -3,7 +3,8 @@ import numpy as np
 import json
 
 
-def extract_coordinates(surface_name, output_dir):
+def extract_coordinates(surface_name):
+    output_dir = 'Surface_' + surface_name
     def shw_img(image, name):
         cv2.namedWindow(name, 0)
         cv2.resizeWindow(name, image.shape[1], image.shape[0]) # w and h
@@ -55,4 +56,4 @@ def extract_coordinates(surface_name, output_dir):
 
 # the next two to lines of code is used to run N1_CornerHarrisPoints.py directly
 if __name__ == '__main__':
-    extract_coordinates(surface_name='4-000', output_dir='Surface_4-000')
+    extract_coordinates(surface_name='4-000')
