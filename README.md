@@ -1,5 +1,10 @@
 # FindCoordinate
 pycharmforGHfirstProject\20230102FindCoordinate
+----------------------------------------
+DATE:2023.06.24:
+Total modified all the files: 
+1)add gan_aid to extract nodes; 
+2)add interaction part to remove and delete wrong relationship.
 
 ■■ the virtual environment I used in my seu computer is: dataaug
 ----------------------------------------
