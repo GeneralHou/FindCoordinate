@@ -18,3 +18,6 @@ Step4: clik Run
 ■■■■ If we want to visualize the grid in 3d:
 we need to put "coordinates_space.json" under the folder "Surface_***" first
 and then run the N7_UseCoordTopoDrawGrid_3D.py
+
+------------------------------------------
+■■■■20230629：fixbug: the code in this main branch can now work well with S19_0 grid. Meanwhile, I also think it is because threshold in N2*.py plays an important role in determining the nodes find ability.
