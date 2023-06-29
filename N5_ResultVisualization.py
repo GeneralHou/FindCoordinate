@@ -3,7 +3,8 @@ import datetime
 import json
 
 
-def result_visualize(surface_name, output_dir):
+def result_visualize(surface_name):
+    output_dir = 'Surface' + '_' + surface_name
     # coordinate data
     with open(f'./{output_dir}/coordinates.json', 'r') as f:
         result = json.load(f)
@@ -30,4 +31,4 @@ def result_visualize(surface_name, output_dir):
 
 
 if __name__ == '__main__':
-    result_visualize('D23', 'Surface_D23')
+    result_visualize('D23')

@@ -262,7 +262,8 @@ def delete_wrong_lines(lines, output_dir, img_path, coordinates, expand_factor, 
     return lines_after_deleting
 
 
-def nodes_relationship(surface_name, output_dir):
+def nodes_relationship(surface_name):
+    output_dir = 'Surface' + '_' + surface_name
 
     img_path = f'./{output_dir}/{surface_name}_crop.png'
 
@@ -317,4 +318,4 @@ nw: int = 8
 expand_factor: float = 0.3  # 0%
 
 if __name__ == '__main__':
-    nodes_relationship('D23', './Surface_D23')
+    nodes_relationship('S19_0')

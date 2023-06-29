@@ -7,7 +7,8 @@ from N3_ClickCoordinates import MissingCoorinates
 import json
 
 
-def corner_harris_points(surface_name, output_dir, test_or_not=False):
+def corner_harris_points(surface_name, test_or_not=False):
+    output_dir = 'Surface' + '_' + surface_name
     # is it a TEST or not ? (the TEST process will show and print the intermediate images)
     test = test_or_not
     # scale factor
@@ -24,12 +25,12 @@ def corner_harris_points(surface_name, output_dir, test_or_not=False):
         cv2.destroyAllWindows()
 
     gray1 = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    ret1, thresh1 = cv2.threshold(gray1, 240, 255, cv2.THRESH_BINARY)
+    ret1, thresh1 = cv2.threshold(gray1, 170, 255, cv2.THRESH_BINARY)
     bgr_img = cv2.cvtColor(thresh1, cv2.COLOR_GRAY2BGR)
     gray = cv2.cvtColor(bgr_img, cv2.COLOR_BGR2GRAY)
     mask = np.zeros(gray.shape, np.uint8)
     dst = cv2.cornerHarris(gray, 4, 5, 0.04)
-    ret, thresh = cv2.threshold(dst, 2, 255, cv2.THRESH_BINARY)  # 20240505 adjust:2
+    ret, thresh = cv2.threshold(dst, 0.01, 255, cv2.THRESH_BINARY)  # 20240505 adjust:2
     if test: shw_img(thresh,'N20threshold.png')
 
     # larger the image size
@@ -94,4 +95,4 @@ def corner_harris_points(surface_name, output_dir, test_or_not=False):
 
 # the next two to lines of code is used to run N1_CornerHarrisPoints.py directly
 if __name__ == '__main__':
-    corner_harris_points(surface_name='4-D05', output_dir='Surface_4-D05', test_or_not=True)
+    corner_harris_points(surface_name='S19_0', test_or_not=True)
