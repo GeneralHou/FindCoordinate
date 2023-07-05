@@ -38,7 +38,7 @@ class CoordTopo2grid:
                 x, y = v[0], -v[1]
                 plt.text(x, y, str(k), fontsize=4, ha='left', va='center', color='blue')
 
-        plt.savefig(f'{self.output_dir}/{self.final_img_name}.png', dpi=1200)
+        plt.savefig(f'{self.output_dir}/{self.final_img_name}.jpg', dpi=1200)
 
 
 if __name__ == '__main__':

@@ -15,16 +15,20 @@ def crop_only_left_frame(img, frame_bounding):
 
 
 def crop(surface_name):
-    output_dir = 'Surface_' + surface_name
-    img = cv2.imread(f'./{output_dir}/{surface_name}.jpg')
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    t, binary = cv2.threshold(gray, 220, 255, cv2.THRESH_BINARY)
+    output_dir = f'Surface_{surface_name}'
+    # make image suitable for with red dots and without red dots
+    img_names = [surface_name+x for x in ['_red', '']]
+    for img_name in img_names:
+        img_path = f'{output_dir}/{img_name}.jpg'
+        img = cv2.imread(img_path)
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        _, binary = cv2.threshold(gray, 220, 255, cv2.THRESH_BINARY)
 
-    contours, hierarchy = cv2.findContours(binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    frame_bounding = cv2.boundingRect(contours[2])
+        contours, _ = cv2.findContours(binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        frame_bounding = cv2.boundingRect(contours[2])
 
-    croped_img = crop_only_left_frame(img, frame_bounding)
-    cv2.imwrite(f'./{output_dir}/{surface_name}_crop.png', croped_img)
+        croped_img = crop_only_left_frame(img, frame_bounding)
+        cv2.imwrite(f'./{output_dir}/{img_name}_crop.jpg', croped_img)
 
 
 if __name__ == '__main__':

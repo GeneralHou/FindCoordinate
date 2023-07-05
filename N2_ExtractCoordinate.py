@@ -5,14 +5,14 @@ import json
 
 def extract_coordinates(surface_name):
     output_dir = 'Surface_' + surface_name
-    def shw_img(image, name):
-        cv2.namedWindow(name, 0)
-        cv2.resizeWindow(name, image.shape[1], image.shape[0]) # w and h
-        cv2.imshow(name, image)
+    def shw_img(img, title='default'):
+        cv2.namedWindow(title, 0)
+        cv2.resizeWindow(title, img.shape[1], img.shape[0]) # w and h
+        cv2.imshow(title, img)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
     # Load the image
-    img = cv2.imread(f'./{output_dir}/{surface_name}_crop.png')
+    img = cv2.imread(f'./{output_dir}/{surface_name}_red_crop.jpg')
 
     # Convert the image to HSV color space
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
@@ -33,7 +33,18 @@ def extract_coordinates(surface_name):
 
     # Combine the two masks
     mask = mask1 + mask2
-    shw_img(mask, "mask")
+    shw_img(mask, "mask(from N2.py)")
+
+    print('If some nodes are too close and connected, You can use morphology operation: OPEN')
+    print("You can adjust 'kernel'in the source code")
+    # adjust the kernel below may help, but it can not solve the problem thoroughly
+    # to avoid this problem, we should not use nodes that are too close to each other
+    input("Press 'ENTER' to continue >>>>>>>")
+
+    # morphology operation: open
+    kernel = np.ones((3,3), np.uint8)  # kernel size ##########################################
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+    shw_img(mask, "after_open(from N2.py)")
 
     # coordinates process
     contours, _ = cv2.findContours(np.uint8(mask), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
@@ -52,8 +63,8 @@ def extract_coordinates(surface_name):
     with open(f'./{output_dir}/coordinates.json', 'w') as json_file:
         json_file.write(json_str)
 
-    cv2.imwrite(f'./{output_dir}/N2_FoundNodes.png', img)
+    cv2.imwrite(f'./{output_dir}/N2_FoundNodes.jpg', img)
 
 # the next two to lines of code is used to run N1_CornerHarrisPoints.py directly
 if __name__ == '__main__':
-    extract_coordinates(surface_name='4-000')
+    extract_coordinates(surface_name='1-000')

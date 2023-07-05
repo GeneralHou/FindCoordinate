@@ -1,320 +1,189 @@
 import cv2
-import numpy as np
-from PIL import Image
-import math
 import json
-from skimage import morphology
+import numpy as np
+from tqdm import tqdm
 
 
-def new_sub_img_size(img_size_, expand_, factor_):
-    sz = np.array(img_size_)
-    exp = np.array(expand_)
-    fct = np.array(factor_)
-    expanded_img = sz + exp * fct
-    # img pixel must be int, therefore we use function 'round' to change 'float' to 'int'
-    expanded_img = [round(x) for x in expanded_img]
-    return expanded_img
-
-
-def get_ij_sub_img(img_path, nh, nw, i, j, expand_factor):
-    image = Image.open(img_path)
-
-    # the size of sub_image
-    width, height = image.size
-    sub_width = width // nw
-    sub_height = height // nh
-
-    # expand distance
-    exp_w = sub_width * expand_factor
-    exp_h = sub_height * expand_factor
-    expand = [exp_w, exp_h, exp_w, exp_h]
-
-    # the default crop
-    left = j * sub_width
-    top = i * sub_height
-    right = left + sub_width
-    bottom = top + sub_height
-    img_size = [left, top, right, bottom]
-
-    # calculate order(tl,tr,br,bl): first_4_corners, then_4_sides, finally_middle_area
-    # expand direction: left_top_right_bottom; expand(1) un_expand(0)
-
-    # 4 corners: (0011, -1001, -1-100, 0-110)
-    if i == 0 and j == 0:
-        factor = [0, 0, 1, 1]
-        expanded_img_size = new_sub_img_size(img_size, expand, factor)
-    elif i == 0 and j == nw-1:
-        factor = [-1, 0, 0, 1]
-        expanded_img_size = new_sub_img_size(img_size, expand, factor)
-    elif i == nh-1 and j == nw-1:
-        factor = [-1, -1, 0, 0]
-        expanded_img_size = new_sub_img_size(img_size, expand, factor)
-    elif i == nh-1 and j == 0:
-        factor = [0, -1, 1, 0]
-        expanded_img_size = new_sub_img_size(img_size, expand, factor)
-
-    # 4 sides: (-1011, -1-101, -1-110, 0-111)
-    elif i == 0 and 0 < j < nw-1:
-        factor = [-1, 0, 1, 1]
-        expanded_img_size = new_sub_img_size(img_size, expand, factor)
-    elif 0 < i < nh-1 and j == nw-1:
-        factor = [-1, -1, 0, 1]
-        expanded_img_size = new_sub_img_size(img_size, expand, factor)
-    elif i == nh-1 and 0 < j < nw-1:
-        factor = [-1, -1, 1, 0]
-        expanded_img_size = new_sub_img_size(img_size, expand, factor)
-    elif 0 < i < nh-1 and j == 0:
-        factor = [0, -1, 1, 1]
-        expanded_img_size = new_sub_img_size(img_size, expand, factor)
-
-    # middle area: (-1-111)
-    else:
-        factor = [-1, -1, 1, 1]
-        expanded_img_size = new_sub_img_size(img_size, expand, factor)
-
-    # crop sub_image
-    sub_image = image.crop(expanded_img_size[:4])
-
-    return sub_image, expanded_img_size
-
-
-# use to calculate the coordinates(nodes) in the area of sub image
-def coordinates_in_sub_img(sub_size_, coordinates):
-    x1, x2 = sub_size_[0], sub_size_[2]
-    y1, y2 = sub_size_[1], sub_size_[3]
-    coordinates_in_sub_ = {}
-    for k, v in coordinates.items():
-        in_x_or_not = x1 <= v[0] <= x2 or x2 <= v[0] <= x1
-        in_y_or_not = y1 <= v[1] <= y2 or y2 <= v[1] <= y1
-        if in_x_or_not and in_y_or_not:
-            coordinates_in_sub_[k] = v
-    return coordinates_in_sub_
-
-
-def calculate_angle(coordinates, a_random, b, c):  # A_random, B and C is the key of dictionary
-    # coordinates of Three points
-    xa, ya = coordinates[a_random][:2]
-    xb, yb = coordinates[b][:2]
-    xc, yc = coordinates[c][:2]
-    # define vector: AB and AC
-    v_ab = np.array([xb - xa, yb - ya])
-    v_ac = np.array([xc - xa, yc - ya])
-    # the angle between two AB and AC
-    cos_angle = np.dot(v_ab, v_ac) / (np.linalg.norm(v_ab) * np.linalg.norm(v_ac))
-    angle = np.arccos(cos_angle)
-    # radian to angle
-    angle = np.degrees(angle)
-    return angle
-
-
-# this function is used in 'TEST' mode
-def show_coordinate_keys(coordinates, img_path, surface_name, output_dir):
-    img = cv2.imread(img_path, 1)
-    color = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (90, 205, 106), (240, 160, 32),
-             (42, 42, 128), (32, 240, 160), (61, 139, 72), (142, 35, 107)]
-    i = 0
-    h, w = img.shape[:2]
-    for k, v in coordinates.items():
-        xx, yy = v[:2]
-        xx = xx if xx < w else xx-w
-        yy = yy if yy < h else yy-h
-        cv2.putText(img, str(k), (xx, yy), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color[i], 1)
-        cv2.circle(img, tuple([x for x in v[:2]]), 1, color[i], 2)
-        if i < len(color)-1:
-            i += 1
-        else:
-            i = 0
-    cv2.namedWindow('Coordinate_keys', cv2.WINDOW_NORMAL)
-    cv2.imshow('Coordinate_keys', img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-    cv2.imwrite(f'./{output_dir}/{surface_name}_crop_with_keys.png', img)
-    return img
-
-
-# this function is used in 'TEST' mode
-def draw_line(coordinates, key1, key2, img):
-    cv2.line(img, tuple([x for x in coordinates[key1]]), tuple([x for x in coordinates[key2]]), (0, 0, 255), 2)
-    cv2.namedWindow('draw_line', cv2.WINDOW_NORMAL)
-    cv2.imshow('draw_line', img)
+def shw_img(img, title='default'):
+    cv2.namedWindow(title, 0)
+    cv2.resizeWindow(title, img.shape[1], img.shape[0]) # w and h
+    cv2.imshow(title, img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
+def is_red(img, coordinate):
+    red = [0,0,255]
+    point_pixel = img[coordinate[1], coordinate[0]]
+    judge = np.array_equal(point_pixel, red)
+    return judge
 
-def avoid_point_in_two_points(coordinates, img_path, surface_name, output_dir):
-    if TEST: img = show_coordinate_keys(coordinates, img_path, surface_name, output_dir)
-    keys = list(coordinates.keys())
-    length = len(keys)
-    lines = []  # used to store paired points
-    for i in range(length - 1):
-        for j in range(i + 1, length):
-            key1, key2 = keys[i], keys[j]
-            rest_keys = [x for x in keys]
-            for get_rest in [key1, key2]:
-                rest_keys.remove(get_rest)
-            # main function: avoid a point in two points by calculating the angle
-            for random in rest_keys:
-                angle = calculate_angle(coordinates, random, key1, key2)
-                # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                if angle > 120:  # if the program do not work well, we can adjust the value '150'
+def is_black(img, coordinate):
+    black = [0,0,0]
+    point_pixel = img[coordinate[1], coordinate[0]]
+    judge = np.array_equal(point_pixel, black)
+    return judge
+
+# judge a coordinate is in a image or not
+def exceed_bound(img, coordinate):
+    img_h, img_w = img.shape[:2]
+    judge = coordinate[0] >= img_w or coordinate[0] < 0 or \
+            coordinate[1] >= img_h or coordinate[1] < 0
+    return judge
+
+def find_red_bound(img, coordinate):
+    red_bound = {'L':[-1,0], 'R':[1,0], 'T':[0,-1], 'B':[0,1]}
+    for k, move_one_pixel in red_bound.items():
+        current_coord = coordinate
+        while is_red(img, current_coord) == True:
+            found_bound = current_coord
+            current_coord = [x+y for x,y in zip(current_coord, move_one_pixel)]
+            # if current coordinate exceed boundary of image, break while in advance
+            if exceed_bound(img, current_coord) == True: break
+        red_bound[k] = found_bound
+    return red_bound
+
+# crop rectangle boundary of red dot(node) as image to further detect black lines
+def crop_red_rectangle(img, rL, rR, rT, rB):
+    expand_factor = 0.5
+    expand_length = max((rR-rL)*expand_factor, (rB-rT)*expand_factor)
+    x1, y1 = rL-expand_length, rT-expand_length
+    x2, y2 = rR+expand_length, rB+expand_length
+    # avoid red rectangle exceed the img boundary and force float to int
+    x1, y1 = int(x1), int(y1)  # left top coordinate
+    x2, y2 = int(x2), int(y2)
+    red_rect_img = img[y1:y2, x1:x2]
+    anchor = [x1, y1]
+    return red_rect_img, anchor
+
+# find out black lines connected to red dot in rectangle boundary
+def black_lines_corresponding_centers(img, anchor):
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # !!!!!'10' below is a changeable parameter
+    # !!!!! it is to extract black pixel but avoid red pixel (under grayscale)
+    _, thresh = cv2.threshold(gray, 10, 255, cv2.THRESH_BINARY_INV)
+    # Find the black pixel clusters
+    _, _, _, centroids = cv2.connectedComponentsWithStats(thresh, 8, cv2.CV_32S)
+    # function below will return 4 results and we just need the final one
+    local_center_list = [[int(x[0]), int(x[1])] for x in centroids[1:]]  # centroids[0] is background
+    # adjust the coordinates from local to global
+    global_center_list = [[x[0]+anchor[0], x[1]+anchor[1]] for x in local_center_list]
+    return global_center_list
+
+# try to find out other red dots from a given start point list and the starting red dot
+def find_other_red_dots(img, start_point_list, origin_red_dot):
+    # final result in this function(use to store coordinates of the red dots we have found)
+    found_red_dots_coords = []
+    
+    def calculate_dist(p1, p2):  # to make calculate dist in while more intuitive
+        return np.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
+
+    for start_point in start_point_list:
+        # define current point and distance
+        current_point = start_point
+        current_dist = calculate_dist(start_point, origin_red_dot)
+
+        # Define the directions to search
+        # it is extremely import to add the first four directions, otherwise, it will bump into infinite loop
+        directions = [[1,1], [1,-1], [-1,-1], [-1,1],[0, 1], [0, -1], [1, 0], [-1, 0]]
+
+        while True:
+            for direct in directions:
+                next_point = [current_point[0]+direct[0], current_point[1]+direct[1]]
+                next_dist = calculate_dist(next_point, origin_red_dot)
+                if exceed_bound(img, next_point):  # whether exceed the boundary of the image or not
+                    break  # should execute first(otherwise, code will raise error when out of image boundary)
+                elif is_red(img, next_point):  # the result we want
+                    found_red_dots_coords.append(next_point)
                     break
-                elif random == rest_keys[-1]:
-                    lines.append([key1, key2])
-                    if TEST: draw_line(coordinates, key1, key2, img)
+                elif is_black(img, next_point) and next_dist >= current_dist:
+                    current_point, current_dist = next_point, next_dist
+                    break
                 else:
+                    # if next_point is not black or is black but distance < current
+                    # continue to search next direction
                     continue
-    return lines
+            if exceed_bound(img, next_point) or is_red(img, next_point): 
+                break  # break from 'while' after 'break' from 'if' above
+    return found_red_dots_coords
 
+# after we have found child red dots, we continue to find out their corresponding serial numbers
+def serial_number_pairs(mom_dot_key, child_red_dots_coord, coordinates):
+    paired_result = []
+    for child_coord in child_red_dots_coord:
+        dist = float('inf')
+        for k, v in coordinates.items():
+            if k == mom_dot_key: continue # search dict of coordinates not including mother key and coordinate
+            new_dist = np.sqrt((v[0] - child_coord[0])**2 + (v[1] - child_coord[1])**2)
+            if new_dist <= dist:
+                dist = new_dist
+                temp_k = k  # store the key corresponding to current minimal distance
+        paired_result.append(sorted([temp_k, mom_dot_key]))
+    return paired_result
 
-def slope_and_length(point1, point2):
-    x1, y1 = point1[:2]
-    x2, y2 = point2[:2]
-    if x1 != x2:
-        slope = (y2-y1)/(x2-x1)
-        sl_radian = np.arctan(slope)
-        sl_degree = np.degrees(sl_radian)
-    else:
-        sl_degree = 90
-    length = math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1))
-    return sl_degree, length
+def relation_in_image(img, coordinates):
+    adjacency_relation = []
+    for n in tqdm(coordinates.keys(), desc='The working process'):  # n: serial number
+        coord = coordinates[n]  # the coordinate corresponding to the serial number
 
+        '''search two direction(x and y) to find out the boundary of red dot(node)'''
+        red_bound = find_red_bound(img, coord)
 
-def get_skel_image(img):
-    resize_img = cv2.resize(img, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
-    gray = cv2.cvtColor(resize_img, cv2.COLOR_BGR2GRAY)
-    laplacian = cv2.Laplacian(gray, cv2.CV_8U)
-    sharp = cv2.addWeighted(gray, 1, laplacian, -0.5, 0)
-    _, binary = cv2.threshold(sharp, 200, 255, cv2.THRESH_BINARY_INV)
-    binary[binary == 255] = 1
-    skel, distance = morphology.medial_axis(binary, return_distance=True)
-    dist_on_skel = distance * skel
-    skel_img = dist_on_skel.astype(np.uint8) * 255
-    skel_img = cv2.resize(skel_img, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_AREA)
-    return skel_img
+        '''find out how many black lines connected to the red dot(node)'''
+        rL, rR = red_bound['L'][0], red_bound['R'][0]  # 'left top' of the boundary rectangle(of the red dot)
+        rT, rB = red_bound['T'][1], red_bound['B'][1]  # 'right bottom' of the boundary rectangle
+        # crop the red boundary rectangle as an image
+        red_rect_img, anchor = crop_red_rectangle(img, rL, rR, rT, rB)
+        # get the list of black lines(and centers)
+        center_list = black_lines_corresponding_centers(red_rect_img, anchor)
 
+        '''search other red dots(nodes)'''
+        found_red_dots = find_other_red_dots(img, center_list, coord)  # the coordinates of the found
+        # find out serial numbers of our found red dots
+        serial_pairs = serial_number_pairs(n, found_red_dots, coordinates)
+        # add to the final list
+        adjacency_relation += serial_pairs
 
-def delete_wrong_lines(lines, output_dir, img_path, coordinates, expand_factor, TEST):
-    lines_after_deleting = []
-    number = 0  # use to count the process of deleting wrong lines process
-    for ln in lines:
-        number += 1
-        if number % 100 == 0: print(f'The whole process: {number}/{len(lines)}')
-        p1, p2 = coordinates[ln[0]], coordinates[ln[1]]
-
-        '''slope and line_length calculation based on 2 points'''
-        sl_degree_of_2points, length_of_line = slope_and_length(p1, p2)
-
-        '''crop a sub image and prepare for the next step'''
-        x, y = min(p1[0], p2[0]), min(p1[1], p2[1])
-        w, h = abs(p1[0] - p2[0]), abs(p1[1] - p2[1])
-        h = 20 if h <= 20 else h  # avoid the line is a horizontal line
-        w = 20 if w <= 20 else w  # avoid the line is a vertical line
-        # expand_factor is defined by myself, it is a global variable
-        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        x_direct_expand = round(w * expand_factor)
-        y_direct_expand = round(h * expand_factor)
-        # below: avoid the new x, y is less than zero (otherwise, it will be a bug)
-        x = x - x_direct_expand if x - x_direct_expand > 0 else x
-        y = y - y_direct_expand if y - y_direct_expand > 0 else y
-        # problem above will not occur below, therefore, set no restriction
-        w = w + x_direct_expand*2
-        h = h + y_direct_expand*2
-        img = cv2.imread(img_path)
-        crop_img = img[y:y+h, x:x+w]
-
-        # get skeleton of the sub image
-        skel_img = get_skel_image(crop_img)
-        if TEST: cv2.imwrite(f'./{output_dir}/20230301SlopeLines/{ln[0]}_{ln[1]}_1_L_0_角度{round(sl_degree_of_2points, 2)}_长度{round(length_of_line, 2)}------------------------------------↓↓↓↓↓↓.png',skel_img)
-        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        hough_lines = cv2.HoughLinesP(image=skel_img, rho=1, theta=np.pi / 180, threshold=round(length_of_line*0.4), lines=np.array([]),
-                                minLineLength=round(length_of_line*0.7), maxLineGap=round(length_of_line*0.4))
-        h_l_num = 0
-        try:  # use this to avoid condition that there is no line in 'hough_lines'
-            for h_l in hough_lines:
-                h_l_num += 1
-                x1, y1, x2, y2 = h_l[0]
-                sl_degree, length = slope_and_length([x1, y1], [x2, y2])
-                # requirement1: represents 'sl_degree' and 'sl_degree_of_2points' are both positive(++) or negative(--)
-                requirement1 = sl_degree * sl_degree_of_2points >= 0
-                # requirement2: when degree close to 90 or -90, HoughLinesP may wrong (it is '+',but detect result is '-'), here to avoid it.
-                requirement2 = abs(90-abs(sl_degree)) > 10
-                if requirement2:  # when degree is not close to 90, requirement2 is 'True'
-                    if requirement1:  # when both are ++ or --
-                        difference = abs(sl_degree - sl_degree_of_2points)
-                    else:
-                        continue
-                else:  # when degree is close to 90
-                    difference = abs(abs(sl_degree_of_2points) - abs(sl_degree))
-                if TEST:
-                    ln_img = crop_img.copy()
-                    cv2.line(ln_img, tuple([x1, y1]), tuple([x2, y2]), (0, 0, 255), 1)
-                    cv2.imwrite(f'./{output_dir}/20230301SlopeLines/{ln[0]}_{ln[1]}_2_L_{h_l_num}_角度{round(sl_degree, 2)}_长度{round(length, 2)}_角差_{round(difference,2)}_长比{round(length/length_of_line,2)}.png', ln_img)
-                # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                threshold_for_def = 10
-                if difference < threshold_for_def:
-                    if ln in lines_after_deleting:
-                        continue
-                    else:
-                        lines_after_deleting.append(ln)
-                        if TEST: cv2.imwrite(f'./{output_dir}/20230301SlopeLines/{ln[0]}_{ln[1]}_3_L_{h_l_num}_角度{round(sl_degree, 2)}_长度{round(length, 2)}_角差_{round(difference,2)}_长比{round(length/length_of_line,2)}---------------↑↑↑↑↑↑↑success.png', ln_img)
-        except:
-            continue
-    return lines_after_deleting
-
+    return adjacency_relation
 
 def nodes_relationship(surface_name):
+    '''''''''''''PREPARE FOR MAIN'''''''''''''''
+    '''DEFINE FILE PATHS'''
     output_dir = 'Surface_' + surface_name
-    img_path = f'./{output_dir}/{surface_name}_crop.png'
+    # image path
+    # img_path = f'./{output_dir}/{surface_name}_nored_crop.png'
+    img_path = f'./{output_dir}/{surface_name}_crop.jpg'
+    # coordinates path
+    coord_path = f'./{output_dir}/coordinates.json'
 
-    # coordinate data
-    with open(f'./{output_dir}/coordinates.json', 'r') as f:
+    '''LOAD DATA'''
+    # load coordinates data
+    with open(coord_path, 'r') as f:
         result = json.load(f)
     coordinates = {int(k): v for k, v in result.items()}
 
-    adjacency_relation_with_wrong_dupl = []
-    for i in range(nh):
-        for j in range(nw):
-            if TEST:
-                i, j = count_h, count_w
-            # get a sub image and its size
-            sub_img, sub_size = get_ij_sub_img(img_path, nh, nw, i, j, expand_factor)  # from another py file
-            if TEST: sub_img.save(f'./{output_dir}/sub_img_{i}{j}.png')
-            # coordinates here represent grid nodes
-            coordinates_in_sub = coordinates_in_sub_img(sub_size, coordinates)
-            # lines store line, and here line represents two points(key of dictionary) that make up a line
-            lines = avoid_point_in_two_points(coordinates_in_sub, img_path, surface_name, output_dir)
-            print(f'The real lines(between 2 points) in sub_img_{i}{j} are:\n{lines}')
-            adjacency_relation_with_wrong_dupl += lines
-            if TEST: break
-        if TEST: break
+    # load image and preprocess it
+    img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+    img[img < 230] = 0  # make it darker(reason: some lines are gray and not that clear)
+    img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+    for _, v in coordinates.items():
+        cv2.circle(img, tuple(v), radius=2, color=(0,0,255), thickness=2)
+    
+    print('Red dots can be set to smaller or bigger by adjusting source code.')
+    print('This two parameter can be adjusted: radius and thickness.')
+    shw_img(img, 'Please check the image is perfect enough to be process(from N3.py)')
+    input('Press ENTER to continue(ctrl+c to quit) >>>>>>')
 
-    # to avoid duplicated data. step 1: make sure x[0] < x[1]
-    adjacency_relation_with_wrong_dupl = [[x[0], x[1]] if x[0] < x[1] else [x[1], x[0]] for x in adjacency_relation_with_wrong_dupl]
-    # to avoid duplicated data. step 2: delete  the duplicated
-    adjacency_relation_with_wrong = []
-    for i in adjacency_relation_with_wrong_dupl:
-        if i in adjacency_relation_with_wrong:
-            continue
-        else:
-            adjacency_relation_with_wrong.append(i)
-    adjacency_relation = delete_wrong_lines(adjacency_relation_with_wrong, output_dir, img_path, coordinates, expand_factor, TEST)
+    '''''''''''''MAIN PART OF THIS FUNCTION'''''''''''''''
+    adjacency_relation = relation_in_image(img, coordinates)
+
+    # delete duplicated adjacency relation in the list
+    adjacency_relation = [list(x) for x in set(tuple(x) for x in adjacency_relation)]
+    
+    # save the final result
     with open(f'./{output_dir}/adjacency_relation.json', 'w') as fp:
         json.dump(adjacency_relation, fp, indent=4)
-    print('The final result is:\n ', adjacency_relation)
-    print(f'The number of lines before deleting the wrong lines: {len(adjacency_relation_with_wrong)}')
-    print('Total number of lines in grid is: ', len(adjacency_relation))
 
-
-'''TEST MODE or NOT'''
-TEST = 0  # '1' is test mode, '0' is ordinary mode
-TEST = True if TEST == 1 else False
-count_h, count_w = 0, 0  # define which area to test: count_h < nh, count_w < w
-
-# the number in two direction and expand_factor
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-nh: int = 6
-nw: int = 10
-expand_factor: float = 0.3  # 0%
 
 if __name__ == '__main__':
     nodes_relationship('4-000')
+

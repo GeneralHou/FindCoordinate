@@ -10,7 +10,7 @@ def interaction():
             if input_str in ['q', 'Q']:
                 break
             nums = [int(num) for num in input_str.split()]
-            # the first number should not greater than the second one, so use 'if' to adjsut it
+            # the first number should not greater than the second one, so use 'if' to adjust it
             if len(nums) != 2:
                 print("Please enter only two numbers!")
                 continue
@@ -37,7 +37,7 @@ def Rmv_add_relatn(surface_name, final_img_name):
     '''remove the wrong adjacency relationship'''
     # Prompt the user to interact with code
     print('*'*50)
-    print("Now, pleae remove wrong relationship.")
+    print("Now, please remove wrong relationship(REMIND: open N4_GridWithKeys.jpg in folder to check).")
     # pick up the the wrong
     wrong_list = interaction()
     # delete the wrong one
@@ -47,7 +47,7 @@ def Rmv_add_relatn(surface_name, final_img_name):
     '''add the missing adjacency relationship'''
     # Prompt the user to interact with code
     print('*'*50)
-    print("Now, pleae add the missing relationship.")
+    print("Now, please add the missing relationship.")
     # pick up the missing
     missing_list = interaction()
     # add the missing one
