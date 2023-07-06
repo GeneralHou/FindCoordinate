@@ -1,11 +1,6 @@
 # FindCoordinate
 pycharmforGHfirstProject\20230102FindCoordinate
 ----------------------------------------
-DATE:2023.06.24:
-Total modified all the files: 
-1)add gan_aid to extract nodes; 
-2)add interaction part to remove and delete wrong relationship.
-
 ■■ the virtual environment I used in my seu computer is: dataaug
 ----------------------------------------
 how to use FindCoordinates:
@@ -24,6 +19,11 @@ Step4: clik Run
 we need to put "coordinates_space.json" under the folder "Surface_***" first
 and then run the N7_UseCoordTopoDrawGrid_3D.py
 
+-----------------------------------------
+2023.06.24: [Modify]
+Total modified all the files: 
+1)add gan_aid to extract nodes; 
+2)add interaction part to remove and delete wrong relationship.
 -----------------------------------------
 20230706: [BigChange] 
 1. We use a new way to find the relationship between nodes, namely search pix by pix to find the relationship.
