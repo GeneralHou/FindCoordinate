@@ -1,9 +1,8 @@
 # FindCoordinate
-pycharmforGHfirstProject\20230102FindCoordinate
-----------------------------------------
-■■ the virtual environment I used in my seu computer is: dataaug
-----------------------------------------
-how to use FindCoordinates:
+location: pycharmforGHfirstProject\20230102FindCoordinate
+virtualenv: the virtual environment I used in my seu computer is: dataaug
+
+## how to use FindCoordinates:
 Step1: create a directory and name it Surface_***
        here, *** is the gan generated img without .jpg extension
 
@@ -14,16 +13,17 @@ Step3: open N0_RunMeOnly.py and change the string pass to variable "surface_name
 Step4: clik Run
 
 -----------------------------------------
-
-■■■■ If we want to visualize the grid in 3d:
+■■■ If we want to visualize the grid in 3d:
 we need to put "coordinates_space.json" under the folder "Surface_***" first
 and then run the N7_UseCoordTopoDrawGrid_3D.py
 
 -----------------------------------------
-2023.06.24: [Modify]
+## Modification Log:
+20230604: [Modify]
 Total modified all the files: 
 1)add gan_aid to extract nodes; 
 2)add interaction part to remove and delete wrong relationship.
+
 -----------------------------------------
 20230706: [BigChange] 
 1. We use a new way to find the relationship between nodes, namely search pix by pix to find the relationship.
