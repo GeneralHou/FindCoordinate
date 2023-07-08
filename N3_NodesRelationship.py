@@ -45,7 +45,7 @@ def find_red_bound(img, coordinate):
 
 # crop rectangle boundary of red dot(node) as image to further detect black lines
 def crop_red_rectangle(img, rL, rR, rT, rB):
-    expand_factor = 0.5
+    expand_factor = 0.3
     expand_length = max((rR-rL)*expand_factor, (rB-rT)*expand_factor)
     x1, y1 = rL-expand_length, rT-expand_length
     x2, y2 = rR+expand_length, rB+expand_length
@@ -62,9 +62,9 @@ def black_lines_corresponding_centers(img, anchor):
     # the black lines may connects to each other, making cv2.connectedComponentsWithStats not work
     # to fix this problem, we erode the black pixels to force lines not connect 
     def erosion(img):
-        big_kernel = np.ones((5,5), np.uint8)
+        big_kernel = np.ones((6,6), np.uint8)
         img = cv2.erode(img, big_kernel, iterations=2)
-        small_kernel = np.ones((2,2), np.uint8)
+        small_kernel = np.ones((3,3), np.uint8)
         img = cv2.erode(img, small_kernel, iterations=2)
         return img
     
@@ -204,5 +204,5 @@ def nodes_relationship(surface_name, test_mode=False, test_n=0):
 
 
 if __name__ == '__main__':
-    nodes_relationship(surface_name='1-000', test_mode=False, test_n=303)
+    nodes_relationship(surface_name='S19_0', test_mode=False, test_n=130)
 
