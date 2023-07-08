@@ -4,17 +4,18 @@ import json
 
 
 class CoordTopo2grid:
-    def __init__(self, output_dir, final_img_name='N5_FinalResult', show_text=False):
-        self.output_dir = output_dir
+    def __init__(self, surface_name, final_img_name='N5_FinalResult', show_text=False):
+        self.surface_name = surface_name
         self.final_img_name = final_img_name
         self.show_text = show_text
 
     def run(self):
-        with open(f'{self.output_dir}/coordinates.json', 'r') as f:
+        output_dir = 'Surface_' + self.surface_name
+        with open(f'{output_dir}/coordinates.json', 'r') as f:
             coordinates = json.load(f)
         coordinates = {int(k): v for k, v in coordinates.items()}
 
-        with open(f'{self.output_dir}/adjacency_relation.json', 'r') as f:
+        with open(f'{output_dir}/adjacency_relation.json', 'r') as f:
             adjacency_relation = json.load(f)
 
         G = nx.Graph()
@@ -38,9 +39,9 @@ class CoordTopo2grid:
                 x, y = v[0], -v[1]
                 plt.text(x, y, str(k), fontsize=4, ha='left', va='center', color='blue')
 
-        plt.savefig(f'{self.output_dir}/{self.final_img_name}.jpg', dpi=1200)
+        plt.savefig(f'{output_dir}/{self.final_img_name}.jpg', dpi=1200)
 
 
 if __name__ == '__main__':
-    Grid2d = CoordTopo2grid(output_dir='./Surface_4-000', final_img_name='N5_FinalResult')
+    Grid2d = CoordTopo2grid(surface_name='1-000', final_img_name='N5_FinalResult')
     Grid2d.run()

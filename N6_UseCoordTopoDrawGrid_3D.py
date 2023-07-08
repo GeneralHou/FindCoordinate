@@ -1,7 +1,8 @@
 import json
 import plotly.graph_objs as go
 
-def draw_grid_3d_space(surface_name, output_dir):
+def draw_grid_3d_space(surface_name):
+    output_dir = 'Surface' + '_' + surface_name
     with open(f'./{output_dir}/adjacency_relation.json', 'r') as f:
         adjacency_relation = json.load(f)
 
@@ -62,4 +63,4 @@ def draw_grid_3d_space(surface_name, output_dir):
 
 
 if __name__ == '__main__':
-    draw_grid_3d_space(surface_name='S19_0', output_dir='Surface_S19_0')
+    draw_grid_3d_space(surface_name='4-000')

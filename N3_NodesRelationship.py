@@ -1,12 +1,13 @@
 import cv2
 import json
 import numpy as np
-from tqdm import tqdm
+import random
 
 
 def shw_img(img, title='default'):
     cv2.namedWindow(title, 0)
-    cv2.resizeWindow(title, img.shape[1], img.shape[0]) # w and h
+    w, h = min(1920, img.shape[1]), min(1080, img.shape[0])
+    cv2.resizeWindow(title, w, h) # w and h
     cv2.imshow(title, img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
@@ -57,12 +58,24 @@ def crop_red_rectangle(img, rL, rR, rT, rB):
 
 # find out black lines connected to red dot in rectangle boundary
 def black_lines_corresponding_centers(img, anchor):
+    # when running the code, a problem occurred: when red dots are not big enough
+    # the black lines may connects to each other, making cv2.connectedComponentsWithStats not work
+    # to fix this problem, we erode the black pixels to force lines not connect 
+    def erosion(img):
+        big_kernel = np.ones((5,5), np.uint8)
+        img = cv2.erode(img, big_kernel, iterations=2)
+        small_kernel = np.ones((2,2), np.uint8)
+        img = cv2.erode(img, small_kernel, iterations=2)
+        return img
+    
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     # !!!!!'10' below is a changeable parameter
     # !!!!! it is to extract black pixel but avoid red pixel (under grayscale)
     _, thresh = cv2.threshold(gray, 10, 255, cv2.THRESH_BINARY_INV)
+    # use function define above
+    erosion_img = erosion(thresh)
     # Find the black pixel clusters
-    _, _, _, centroids = cv2.connectedComponentsWithStats(thresh, 8, cv2.CV_32S)
+    _, _, _, centroids = cv2.connectedComponentsWithStats(erosion_img, 8, cv2.CV_32S)
     # function below will return 4 results and we just need the final one
     local_center_list = [[int(x[0]), int(x[1])] for x in centroids[1:]]  # centroids[0] is background
     # adjust the coordinates from local to global
@@ -87,7 +100,9 @@ def find_other_red_dots(img, start_point_list, origin_red_dot):
         directions = [[1,1], [1,-1], [-1,-1], [-1,1],[0, 1], [0, -1], [1, 0], [-1, 0]]
 
         while True:
-            for direct in directions:
+            random_indices = random.sample(range(8), 8)  # randomly choose from list, make sure every direction has opportunity
+            for index in random_indices:
+                direct = directions[index]
                 next_point = [current_point[0]+direct[0], current_point[1]+direct[1]]
                 next_dist = calculate_dist(next_point, origin_red_dot)
                 if exceed_bound(img, next_point):  # whether exceed the boundary of the image or not
@@ -120,11 +135,11 @@ def serial_number_pairs(mom_dot_key, child_red_dots_coord, coordinates):
         paired_result.append(sorted([temp_k, mom_dot_key]))
     return paired_result
 
-def relation_in_image(img, coordinates):
+def relation_in_image(img, coordinates, test_mode=False, test_n=0):
     adjacency_relation = []
-    for n in tqdm(coordinates.keys(), desc='The working process'):  # n: serial number
-        coord = coordinates[n]  # the coordinate corresponding to the serial number
-
+    for n, coord in coordinates.items():  # n: serial number
+        if test_mode: n, coord = test_n, coordinates[test_n]
+        print(f'Processing Node {n}: with coord {coord}')
         '''search two direction(x and y) to find out the boundary of red dot(node)'''
         red_bound = find_red_bound(img, coord)
 
@@ -141,11 +156,13 @@ def relation_in_image(img, coordinates):
         # find out serial numbers of our found red dots
         serial_pairs = serial_number_pairs(n, found_red_dots, coordinates)
         # add to the final list
+        print(f'Processing Node {n}: Finished')
         adjacency_relation += serial_pairs
+        if test_mode: break
 
     return adjacency_relation
 
-def nodes_relationship(surface_name):
+def nodes_relationship(surface_name, test_mode=False, test_n=0):
     '''''''''''''PREPARE FOR MAIN'''''''''''''''
     '''DEFINE FILE PATHS'''
     output_dir = 'Surface_' + surface_name
@@ -165,16 +182,18 @@ def nodes_relationship(surface_name):
     img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
     img[img < 230] = 0  # make it darker(reason: some lines are gray and not that clear)
     img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+    # Define the new dimensions
+
     for _, v in coordinates.items():
-        cv2.circle(img, tuple(v), radius=2, color=(0,0,255), thickness=2)
-    
+        cv2.circle(img, tuple(v), radius=45, color=(0,0,255), thickness=-1)
+    if test_mode: cv2.imwrite(f'./{output_dir}/N3_{surface_name}_test.jpg', img)
     print('Red dots can be set to smaller or bigger by adjusting source code.')
     print('This two parameter can be adjusted: radius and thickness.')
     shw_img(img, 'Please check the image is perfect enough to be process(from N3.py)')
     input('Press ENTER to continue(ctrl+c to quit) >>>>>>')
 
     '''''''''''''MAIN PART OF THIS FUNCTION'''''''''''''''
-    adjacency_relation = relation_in_image(img, coordinates)
+    adjacency_relation = relation_in_image(img, coordinates, test_mode, test_n)
 
     # delete duplicated adjacency relation in the list
     adjacency_relation = [list(x) for x in set(tuple(x) for x in adjacency_relation)]
@@ -185,5 +204,5 @@ def nodes_relationship(surface_name):
 
 
 if __name__ == '__main__':
-    nodes_relationship('4-000')
+    nodes_relationship(surface_name='1-000', test_mode=False, test_n=303)
 

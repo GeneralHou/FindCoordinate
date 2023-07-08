@@ -27,7 +27,7 @@ def interaction():
 def Rmv_add_relatn(surface_name, final_img_name):
     output_dir = 'Surface' + '_' + surface_name
     # generate a image to help me decide to add or remove relationship
-    CoordTopo2grid(output_dir, final_img_name, show_text=True).run()
+    CoordTopo2grid(surface_name, final_img_name, show_text=True).run()
 
     # load the adjacency relationship file
     with open(f'{output_dir}/adjacency_relation.json', 'r') as f:

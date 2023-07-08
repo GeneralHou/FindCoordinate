@@ -30,7 +30,7 @@ N4_RemoveAddRelation.Rmv_add_relatn(surface_name, final_img_name="N4_GridWithKey
 print()
 print('■'*5, 'STEP 5: DRAW THE FINAL RESULT')
 # use coordinates and topology relationship to get the grid(planar grid)
-N5_UseCoordTopoDrawGrid.CoordTopo2grid(output_dir, show_text=False).run()
+N5_UseCoordTopoDrawGrid.CoordTopo2grid(surface_name, show_text=False).run()
 
 # Prompt:
 print("If there still exists any wrong relationship, just run 'N4_RemoveAddRelation.py' separately.")

@@ -7,13 +7,13 @@ def extract_coordinates(surface_name):
     output_dir = 'Surface_' + surface_name
     def shw_img(img, title='default'):
         cv2.namedWindow(title, 0)
-        cv2.resizeWindow(title, img.shape[1], img.shape[0]) # w and h
+        w, h = min(1920, img.shape[1]), min(1080, img.shape[0])
+        cv2.resizeWindow(title, w, h) # w and h
         cv2.imshow(title, img)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
     # Load the image
     img = cv2.imread(f'./{output_dir}/{surface_name}_red_crop.jpg')
-
     # Convert the image to HSV color space
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
@@ -42,7 +42,7 @@ def extract_coordinates(surface_name):
     input("Press 'ENTER' to continue >>>>>>>")
 
     # morphology operation: open
-    kernel = np.ones((3,3), np.uint8)  # kernel size ##########################################
+    kernel = np.ones((45,45), np.uint8)  # kernel size ##########################################
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
     shw_img(mask, "after_open(from N2.py)")
 
@@ -54,7 +54,7 @@ def extract_coordinates(surface_name):
         if w > 1 and h > 1:
             cx = int(x + w / 2)
             cy = int(y + h / 2)
-            cv2.circle(img, (cx, cy), 2, (0, 255, 0), -1, cv2.LINE_AA)
+            cv2.circle(img, (cx, cy), 15, (0, 255, 0), -1, cv2.LINE_AA)
             # return to original scale
             found_coordinates.append([round(cx), round(cy)])
 

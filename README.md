@@ -30,3 +30,12 @@ Total modified all the files:
 2. At the same time, we modify other .py files to make them more suitable for the new modification.
 
 ■■ Attention: to run the new code, two images needed to be prepared(one with red dots and one without). How to use the new version is shown above.
+
+-----------------------------------------
+20230708: [BigChange] 
+1. in N1_crop.py, we larger the image with 15 times in width and height direction, respectively.
+2. in N3.relationship.py, we add a sub-function in "def black_lines_corresponding_centers(img, anchor)" which we call it "def erosion(img)". check the source to know more.
+3. we also make some other changes, but not that big.
+
+
+■■ Attention: to run the new code, two images needed to be prepared(one with red dots and one without). How to use the new version is shown above.
