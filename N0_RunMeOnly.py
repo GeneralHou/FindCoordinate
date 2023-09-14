@@ -4,7 +4,7 @@ import N3_NodesRelationship
 import N4_RemoveAddRelation
 import N5_UseCoordTopoDrawGrid
 
-surface_name = '1-000'
+surface_name = 'G356'
 
 output_dir = 'Surface' + '_' + surface_name
 

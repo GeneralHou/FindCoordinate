@@ -43,5 +43,5 @@ class CoordTopo2grid:
 
 
 if __name__ == '__main__':
-    Grid2d = CoordTopo2grid(surface_name='1-000', final_img_name='N5_FinalResult')
+    Grid2d = CoordTopo2grid(surface_name='4-000', final_img_name='N5_FinalResult', show_text=True)
     Grid2d.run()

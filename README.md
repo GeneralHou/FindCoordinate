@@ -36,3 +36,8 @@ Total modified all the files:
 1. in N1_crop.py, we larger the image with 15 times in width and height direction, respectively.
 2. in N3.relationship.py, we add a sub-function in "def black_lines_corresponding_centers(img, anchor)" which we call it "def erosion(img)". check the source to know more.
 3. we also make some other changes, but not that big.
+
+20230915: [Modify]
+1. in N5.py, when always set the directions as 1, as below, it may face a sitution that it can not find out the next point, and loop infinitely.
+[[1,1], [1,-1], [-1,-1], [-1,1],[0, 1], [0, -1], [1, 0], [-1, 0]]
+2. therefore, I modfied the code, when all the direcions have been used but still can not find out the next point, enlarge the direction to 2, if still not find the next point, go to 3.

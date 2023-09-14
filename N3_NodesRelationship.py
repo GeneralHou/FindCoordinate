@@ -83,7 +83,7 @@ def black_lines_corresponding_centers(img, anchor):
     return global_center_list
 
 # try to find out other red dots from a given start point list and the starting red dot
-def find_other_red_dots(img, start_point_list, origin_red_dot):
+def find_other_red_dots(img, start_point_list, origin_red_dot, test_mode=False):
     # final result in this function(use to store coordinates of the red dots we have found)
     found_red_dots_coords = []
     
@@ -98,12 +98,15 @@ def find_other_red_dots(img, start_point_list, origin_red_dot):
         # Define the directions to search
         # it is extremely import to add the first four directions, otherwise, it will bump into infinite loop
         directions = [[1,1], [1,-1], [-1,-1], [-1,1],[0, 1], [0, -1], [1, 0], [-1, 0]]
-
+        
+        # try times and default direction factor
+        tried, d_factor = 0, 1
         while True:
             random_indices = random.sample(range(8), 8)  # randomly choose from list, make sure every direction has opportunity
             for index in random_indices:
                 direct = directions[index]
-                next_point = [current_point[0]+direct[0], current_point[1]+direct[1]]
+                next_point = [current_point[0]+direct[0]*d_factor, current_point[1]+direct[1]*d_factor]
+                if test_mode: print(f"To next from point(OriginalRedPoint:{origin_red_dot}): {current_point}")
                 next_dist = calculate_dist(next_point, origin_red_dot)
                 if exceed_bound(img, next_point):  # whether exceed the boundary of the image or not
                     break  # should execute first(otherwise, code will raise error when out of image boundary)
@@ -116,6 +119,13 @@ def find_other_red_dots(img, start_point_list, origin_red_dot):
                 else:
                     # if next_point is not black or is black but distance < current
                     # continue to search next direction
+                    tried += 1
+                    if tried % len(directions) == 0:
+                        # if all dirctions are used but not found next point yet
+                        # enlarge the direction factor
+                        d_factor += 1
+
+
                     continue
             if exceed_bound(img, next_point) or is_red(img, next_point): 
                 break  # break from 'while' after 'break' from 'if' above
@@ -152,7 +162,7 @@ def relation_in_image(img, coordinates, test_mode=False, test_n=0):
         center_list = black_lines_corresponding_centers(red_rect_img, anchor)
 
         '''search other red dots(nodes)'''
-        found_red_dots = find_other_red_dots(img, center_list, coord)  # the coordinates of the found
+        found_red_dots = find_other_red_dots(img, center_list, coord, test_mode=test_mode)  # the coordinates of the found
         # find out serial numbers of our found red dots
         serial_pairs = serial_number_pairs(n, found_red_dots, coordinates)
         # add to the final list
@@ -204,5 +214,4 @@ def nodes_relationship(surface_name, test_mode=False, test_n=0):
 
 
 if __name__ == '__main__':
-    nodes_relationship(surface_name='S19_0', test_mode=False, test_n=130)
-
+    nodes_relationship(surface_name='G356', test_mode=False, test_n=235)
